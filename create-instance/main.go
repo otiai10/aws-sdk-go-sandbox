@@ -56,7 +56,7 @@ func main() {
 		InstanceType:   aws.String("t2.micro"),
 		SecurityGroups: []*string{&securitygroup},
 		ImageId:        aws.String("ami-c2680fa4"),
-		KeyName:        aws.String("otiai10.tokyo"),
+		KeyName:        aws.String(keyname),
 		MaxCount:       aws.Int64(1),
 		MinCount:       aws.Int64(1),
 		TagSpecifications: []*ec2.TagSpecification{
