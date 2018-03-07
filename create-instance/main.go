@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/otiai10/errorr"
+	"github.com/otiai10/stackerr"
 )
 
 var (
@@ -31,7 +31,7 @@ func init() {
 }
 
 func validate() error {
-	err := errorr.New()
+	err := stackerr.New()
 	if securitygroup == "" {
 		err.Pushf("SecurityGroup is required: Use `-sg YourSecurityGroupName`")
 	}
