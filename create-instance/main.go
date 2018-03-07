@@ -15,6 +15,7 @@ import (
 var (
 	region        string
 	name          string
+	instancetype  string
 	securitygroup string
 	keyname       string
 	description   string
@@ -24,6 +25,7 @@ var (
 func init() {
 	flag.StringVar(&region, "region", "ap-northeast-1", "Region")
 	flag.StringVar(&name, "name", "Test-Instance-SDK-Go", "Instance Name")
+	flag.StringVar(&instancetype, "instancetype", "t2.micro", "Instance Type")
 	flag.StringVar(&securitygroup, "sg", "", "SecurityGroup Name")
 	flag.StringVar(&keyname, "keyname", "", "Key Pair Name")
 	flag.BoolVar(&clean, "clean", false, "DEBUG: clean up existing SG")
@@ -53,7 +55,7 @@ func main() {
 	client := ec2.New(sess)
 
 	out, err := client.RunInstances(&ec2.RunInstancesInput{
-		InstanceType:   aws.String("t2.micro"),
+		InstanceType:   aws.String(instancetype),
 		SecurityGroups: []*string{&securitygroup},
 		ImageId:        aws.String("ami-c2680fa4"),
 		KeyName:        aws.String(keyname),
