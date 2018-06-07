@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/otiai10/iamutil"
 )
 
@@ -16,7 +18,17 @@ func main() {
 
 	name := "otiai10-test"
 
-	if found, _ := iamutil.FindInstanceProfile(sess, name); found != nil {
+	if found, err := iamutil.FindInstanceProfile(sess, name); err != nil {
+		ae, ok := err.(awserr.Error)
+		if !ok {
+			fmt.Println("Unexpected error on finding existing instance profile:", err)
+			return
+		}
+		if ae.Code() != iam.ErrCodeNoSuchEntityException {
+			fmt.Println(err)
+			return
+		}
+	} else {
 		if err := found.Delete(sess); err != nil {
 			fmt.Println("Failed to delete existing instance profile", err)
 			return
@@ -30,7 +42,7 @@ func main() {
 				"arn:aws:iam::aws:policy/AmazonS3FullAccess",
 			},
 		},
-		Name: "otiai10-test",
+		Name: name,
 	}
 
 	if err := profile.Create(sess); err != nil {
