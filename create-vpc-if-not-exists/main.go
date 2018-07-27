@@ -153,6 +153,28 @@ func main() {
 	}
 	fmt.Println("Route created")
 
+	const policydocument = `{
+	"Statement": [
+			{
+					"Action": "*",
+					"Effect": "Allow",
+					"Resource": "*",
+					"Principal": "*"
+			}
+	]
+}`
+	vpceout, err := client.CreateVpcEndpoint(&ec2.CreateVpcEndpointInput{
+		RouteTableIds:  []*string{routetable.RouteTableId},
+		ServiceName:    aws.String(fmt.Sprintf("com.amazonaws.%s.s3", region)),
+		PolicyDocument: aws.String(policydocument),
+		VpcId:          vpc.VpcId,
+	})
+	if err != nil {
+		log.Fatalln("13", err)
+	}
+
+	fmt.Printf("VPC Endpoint created: %s\n", *vpceout.VpcEndpoint.VpcEndpointId)
+
 	fmt.Println("Congrats! Everything is up!!")
 }
 
@@ -210,13 +232,34 @@ func cleanupVpc(client *ec2.EC2, vpc *ec2.Vpc) error {
 	}
 	fmt.Println("and deleted.")
 
+	// Delete VPC endpoints
+	vpces, err := client.DescribeVpcEndpoints(&ec2.DescribeVpcEndpointsInput{
+		Filters: []*ec2.Filter{
+			{Name: aws.String("vpc-id"), Values: []*string{vpc.VpcId}},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%d VPC endpoints found,\n", len(vpces.VpcEndpoints))
+	vpcepIDs := []*string{}
+	for _, vpcep := range vpces.VpcEndpoints {
+		vpcepIDs = append(vpcepIDs, vpcep.VpcEndpointId)
+	}
+	if _, err := client.DeleteVpcEndpoints(&ec2.DeleteVpcEndpointsInput{
+		VpcEndpointIds: vpcepIDs,
+	}); err != nil {
+		return err
+	}
+	fmt.Println("and deleted.")
+
 	// Delete VPC
 	if _, err := client.DeleteVpc(&ec2.DeleteVpcInput{
 		VpcId: vpc.VpcId,
 	}); err != nil {
 		return err
 	}
-	fmt.Printf("VPC %s deleted.", *vpc.VpcId)
+	fmt.Printf("VPC %s deleted.\n", *vpc.VpcId)
 
 	return err
 }
