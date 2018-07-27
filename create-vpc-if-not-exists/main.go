@@ -40,14 +40,13 @@ func main() {
 	}
 
 	if vpcs := vpcsout.Vpcs; len(vpcs) != 0 {
-		fmt.Printf("%+v\n", vpcs[0])
-		fmt.Printf("Total %d VPCs.\n", len(vpcs))
+		fmt.Printf("Total %d VPCs found.\n", len(vpcs))
 		if !clean {
 			return // If exists, do nothing
 		}
 		// Clean up if "clean" flag is specified.
 		if err := cleanupVpcs(client, vpcs); err != nil {
-			log.Fatalln("01-clean", err)
+			log.Fatalln("Cleaning failed:", err)
 		}
 	}
 
@@ -197,7 +196,7 @@ func cleanupVpc(client *ec2.EC2, vpc *ec2.Vpc) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%d InternetGateways found,\n", len(igws.InternetGateways))
+	fmt.Printf("[clean] %d InternetGateways found,\n", len(igws.InternetGateways))
 	for _, ig := range igws.InternetGateways {
 		if _, err := client.DetachInternetGateway(&ec2.DetachInternetGatewayInput{
 			InternetGatewayId: ig.InternetGatewayId,
@@ -211,7 +210,7 @@ func cleanupVpc(client *ec2.EC2, vpc *ec2.Vpc) error {
 			return err
 		}
 	}
-	fmt.Println("and deleted.")
+	fmt.Println("[clean] and deleted.")
 
 	// Delete Subnets
 	snts, err := client.DescribeSubnets(&ec2.DescribeSubnetsInput{
@@ -222,7 +221,7 @@ func cleanupVpc(client *ec2.EC2, vpc *ec2.Vpc) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%d Subnets found,\n", len(snts.Subnets))
+	fmt.Printf("[clean] %d Subnets found,\n", len(snts.Subnets))
 	for _, sn := range snts.Subnets {
 		if _, err := client.DeleteSubnet(&ec2.DeleteSubnetInput{
 			SubnetId: sn.SubnetId,
@@ -230,7 +229,7 @@ func cleanupVpc(client *ec2.EC2, vpc *ec2.Vpc) error {
 			return err
 		}
 	}
-	fmt.Println("and deleted.")
+	fmt.Println("[clean] and deleted.")
 
 	// Delete VPC endpoints
 	vpces, err := client.DescribeVpcEndpoints(&ec2.DescribeVpcEndpointsInput{
@@ -241,7 +240,7 @@ func cleanupVpc(client *ec2.EC2, vpc *ec2.Vpc) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%d VPC endpoints found,\n", len(vpces.VpcEndpoints))
+	fmt.Printf("[clean] %d VPC endpoints found,\n", len(vpces.VpcEndpoints))
 	vpcepIDs := []*string{}
 	for _, vpcep := range vpces.VpcEndpoints {
 		vpcepIDs = append(vpcepIDs, vpcep.VpcEndpointId)
@@ -251,7 +250,7 @@ func cleanupVpc(client *ec2.EC2, vpc *ec2.Vpc) error {
 	}); err != nil {
 		return err
 	}
-	fmt.Println("and deleted.")
+	fmt.Println("[clean] and deleted.")
 
 	// Delete VPC
 	if _, err := client.DeleteVpc(&ec2.DeleteVpcInput{
@@ -259,7 +258,7 @@ func cleanupVpc(client *ec2.EC2, vpc *ec2.Vpc) error {
 	}); err != nil {
 		return err
 	}
-	fmt.Printf("VPC %s deleted.\n", *vpc.VpcId)
 
-	return err
+	fmt.Printf("[clean] VPC %s deleted.\n", *vpc.VpcId)
+	return nil
 }
